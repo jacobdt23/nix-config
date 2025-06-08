@@ -2,21 +2,22 @@
 
 {
   home-manager.users.nixos = {
-    home = {
-      username = "nixos";
-      homeDirectory = "/home/nixos";
-
-      # ✅ This line is mandatory!
-      stateVersion = "25.05";
-    };
-
-    programs.home-manager.enable = true;
+    home.username = "nixos";
+    home.homeDirectory = "/home/nixos";
+    home.stateVersion = "25.05";
 
     home.packages = with pkgs; [
       htop
       tree
       gh
-
+      vscode
     ];
+
+    programs.vscode = {
+      enable = true;
+      extensions = with pkgs.vscode-extensions; [
+        github.copilot
+      ];
+    };
   };
 }

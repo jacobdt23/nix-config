@@ -1,6 +1,7 @@
 { config, pkgs, ... }:
 
 {
+
   system.stateVersion = "25.05";
   nixpkgs.config.allowUnfree = true;
 
@@ -25,6 +26,7 @@
     packages = with pkgs; [];
   };
 
+  
   imports = [
     ./hardware-configuration.nix
   ];
