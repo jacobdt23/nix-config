@@ -11,33 +11,39 @@
     let
       system = "x86_64-linux";
 
-      # ✅ Custom pkgs with unfree allowed
+      # Import pkgs with allowUnfree = true for packages
       pkgs = import nixpkgs {
         inherit system;
-        config.allowUnfree = true;
+        config = {
+          allowUnfree = true;
+        };
       };
-    in {
+    in
+    {
+      # Use nixpkgs.lib.nixosSystem directly here, not pkgs.lib.nixosSystem
       nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
         inherit system;
 
         modules = [
-          # ✅ Correct way to pass pre-configured pkgs
-          { nixpkgs.pkgs = pkgs; }
-
-          # ✅ Prevent NixOS from trying to apply nixpkgs.config again
-          "${nixpkgs}/nixos/modules/misc/nixpkgs/read-only.nix"
-
+          {
+            nixpkgs.config.allowUnfree = true;
+          }
           ./configuration.nix
           ./hardware-configuration.nix
-
-          # ✅ Enable Home Manager as a NixOS module
           home-manager.nixosModules.home-manager
-          ./home.nix
         ];
 
         specialArgs = {
-          inherit pkgs home-manager;
+          inherit home-manager;
         };
+      };
+
+      # For home manager, use the pkgs you imported above
+      homeConfigurations.nixos = home-manager.lib.homeManagerConfiguration {
+        pkgs = pkgs;
+        modules = [
+          ./home.nix
+        ];
       };
     };
 }
