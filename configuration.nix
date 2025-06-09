@@ -104,6 +104,7 @@
     xdg-desktop-portal-hyprland
     wl-clipboard
     psmisc
+    xdg-utils 
   ];
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
