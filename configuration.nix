@@ -1,11 +1,9 @@
 { config, pkgs, ... }:
 
 {
-
   system.stateVersion = "25.05";
   nixpkgs.config.allowUnfree = true;
 
-  # Define the Emacs user service at top level, not inside users.users
   systemd.user.services.emacs = {
     description = "Emacs daemon";
     after = [ "network.target" ];
@@ -26,44 +24,48 @@
     packages = with pkgs; [];
   };
 
-  
   imports = [
     ./hardware-configuration.nix
   ];
 
   boot.kernelParams = [ "nvidia-drm.modeset=1" ];
 
-  services.xserver.videoDrivers = [ "nvidia" ];
-
-  hardware.nvidia = {
-    modesetting.enable = true;
-    powerManagement.enable = true;
-    powerManagement.finegrained = false;
-    open = false; # use proprietary driver
-    nvidiaSettings = true;
-  };
-
   services.xserver = {
     enable = true;
     displayManager.gdm.enable = true;
     displayManager.gdm.wayland = true;
     desktopManager.gnome.enable = true;
+    xkb.layout = "us";
+    xkb.variant = "";
   };
 
-  boot.loader.systemd-boot.enable = true;
+  hardware.nvidia = {
+    modesetting.enable = true;
+    powerManagement.enable = true;
+    powerManagement.finegrained = false;
+    open = false;
+    nvidiaSettings = true;
+  };
+
+  boot.loader.systemd-boot = {
+    enable = true;
+    configurationLimit = 3;
+  };
   boot.loader.efi.canTouchEfiVariables = true;
-  boot.loader.systemd-boot.configurationLimit = 3;
 
-  nix.gc.automatic = true;
-  nix.gc.options = "--delete-older-than 7d";
+  nix.gc = {
+    automatic = true;
+    options = "--delete-older-than 7d";
+  };
 
-  networking.hostName = "nixos";
-  networking.networkmanager.enable = true;
+  networking = {
+    hostName = "nixos";
+    networkmanager.enable = true;
+  };
 
   time.timeZone = "America/Indiana/Indianapolis";
 
   i18n.defaultLocale = "en_US.UTF-8";
-
   i18n.extraLocaleSettings = {
     LC_ADDRESS = "en_US.UTF-8";
     LC_IDENTIFICATION = "en_US.UTF-8";
@@ -105,18 +107,13 @@
     wl-clipboard
     psmisc
     xdg-utils 
+    remmina 
   ];
 
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
 
   services.flatpak.enable = true;
-
   programs.hyprland.enable = true;
-
-  services.xserver.xkb = {
-    layout = "us";
-    variant = "";
-  };
 
   services.printing.enable = true;
 
