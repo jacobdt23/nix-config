@@ -38,7 +38,8 @@ in {
     glxinfo
     vulkan-tools
     pciutils
-  ];
+    neofetch 
+   ];
 
   programs.vscode = {
     enable = true;

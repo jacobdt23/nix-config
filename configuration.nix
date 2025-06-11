@@ -1,128 +1,101 @@
 { config, pkgs, ... }:
 
 {
-  system.stateVersion = "25.05";
-  nixpkgs.config.allowUnfree = true;
-
-  systemd.user.services.emacs = {
-    description = "Emacs daemon";
-    after = [ "network.target" ];
-    serviceConfig = {
-      Type = "forking";
-      ExecStart = "${pkgs.emacs}/bin/emacs --daemon";
-      ExecStop = "${pkgs.emacs}/bin/emacsclient --eval \"(kill-emacs)\"";
-      Restart = "always";
-      RestartSec = 2;
-    };
-    wantedBy = [ "default.target" ];
-  };
-
-  users.users.nixos = {
-    isNormalUser = true;
-    description = "jacob";
-    extraGroups = [ "networkmanager" "wheel" ];
-    packages = with pkgs; [];
-  };
-
   imports = [
     ./hardware-configuration.nix
   ];
 
-  boot.kernelParams = [ "nvidia-drm.modeset=1" ];
+  # Nix settings
+  nix.settings.experimental-features = [ "nix-command" "flakes" ];
+  nix.gc.automatic = true;
+  nix.gc.dates = "weekly";
+  nix.gc.options = "--delete-older-than 7d";
 
-  services.xserver = {
-    enable = true;
-    displayManager.gdm.enable = true;
-    displayManager.gdm.wayland = true;
-    desktopManager.gnome.enable = true;
-    xkb.layout = "us";
-    xkb.variant = "";
-  };
+  # System settings
+  networking.hostName = "nixos";
+  time.timeZone = "America/New_York";
+  i18n.defaultLocale = "en_US.UTF-8";
 
+  # Bootloader
+  boot.loader.systemd-boot.enable = true;
+  boot.loader.efi.canTouchEfiVariables = true;
+
+  # NVIDIA drivers
+  services.xserver.videoDrivers = [ "nvidia" ];
   hardware.nvidia = {
     modesetting.enable = true;
-    powerManagement.enable = true;
-    powerManagement.finegrained = false;
+    powerManagement.enable = false;
     open = false;
     nvidiaSettings = true;
   };
 
-  boot.loader.systemd-boot = {
-    enable = true;
-    configurationLimit = 3;
-  };
-  boot.loader.efi.canTouchEfiVariables = true;
-
-  nix.gc = {
-    automatic = true;
-    options = "--delete-older-than 7d";
-  };
-
-  networking = {
-    hostName = "nixos";
-    networkmanager.enable = true;
-  };
-
-  time.timeZone = "America/Indiana/Indianapolis";
-
-  i18n.defaultLocale = "en_US.UTF-8";
-  i18n.extraLocaleSettings = {
-    LC_ADDRESS = "en_US.UTF-8";
-    LC_IDENTIFICATION = "en_US.UTF-8";
-    LC_MEASUREMENT = "en_US.UTF-8";
-    LC_MONETARY = "en_US.UTF-8";
-    LC_NAME = "en_US.UTF-8";
-    LC_NUMERIC = "en_US.UTF-8";
-    LC_PAPER = "en_US.UTF-8";
-    LC_TELEPHONE = "en_US.UTF-8";
-    LC_TIME = "en_US.UTF-8";
-  };
-
-  environment.systemPackages = with pkgs; [
-    vim
-    wget
-    git
-    neofetch
-    gnome-tweaks
-    gnome-session
-    brave
-    gcc
-    fd
-    ripgrep
-    gnutls
-    emacs
-    coreutils
-    findutils
-    gnused
-    gnugrep
-    curl
-    flatpak
-    hyprland
-    waybar
-    kitty
-    wofi
-    dunst
-    mako
-    xdg-desktop-portal-hyprland
-    wl-clipboard
-    psmisc
-    xdg-utils 
-    remmina 
-  ];
-
-  nix.settings.experimental-features = [ "nix-command" "flakes" ];
-
-  services.flatpak.enable = true;
-  programs.hyprland.enable = true;
-
-  services.printing.enable = true;
-
+  # PipeWire (better than PulseAudio)
   services.pulseaudio.enable = false;
   security.rtkit.enable = true;
   services.pipewire = {
-    enable = true;
     alsa.enable = true;
-    alsa.support32Bit = true;
     pulse.enable = true;
+    jack.enable = true;
   };
+
+  # Desktop Environment & Display Manager
+  programs.hyprland.enable = true;
+  services.xserver.displayManager.gdm.enable = true;
+  services.xserver.desktopManager.gnome.enable = true;
+
+  # Flatpak
+  services.flatpak.enable = true;
+
+  # Auto-login idle prevention
+  services.logind = {
+    extraConfig = ''
+      IdleAction=ignore
+      IdleActionSec=0
+      HandleLidSwitch=ignore
+      HandleLidSwitchDocked=ignore
+    '';
+  };
+
+  # Disable screen blanking / DPMS via systemd user service
+  systemd.user.services.disable-screen-blanking = {
+    description = "Disable screen blanking and DPMS";
+    wantedBy = [ "graphical-session.target" ];
+    serviceConfig = {
+      Type = "oneshot";
+      ExecStart = "${pkgs.xorg.xset}/bin/xset s off -dpms s noblank";
+    };
+  };
+
+  # User account
+  users.users.nixos = {
+    isNormalUser = true;
+    description = "Jacob";
+    extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
+    shell = pkgs.bash;
+  };
+
+  # System packages
+  environment.systemPackages = with pkgs; [
+    git
+    vim
+    wget
+    curl
+    emacs
+    brave
+    kitty
+    waybar
+    xorg.xset
+  ];
+
+  # Home Manager integration
+  home-manager = {
+    useUserPackages = true;
+    useGlobalPkgs = true;
+    users.nixos = import ./home.nix;
+  };
+
+  # Allow unfree packages
+  nixpkgs.config.allowUnfree = true;
+
+  system.stateVersion = "25.05";
 }
