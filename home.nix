@@ -1,4 +1,4 @@
-{ config, pkgs, ... }:
+{ config, pkgs, lib, ... }:
 
 let
   resolve-fhs = pkgs.buildFHSEnv {
@@ -59,6 +59,7 @@ in {
     Install.WantedBy = [ "default.target" ];
   };
 
+  # ─── Davinci Resolve Script ─────────────────────────────────────────────
   home.file.".local/bin/resolve.sh" = {
     text = ''
       #!/usr/bin/env bash
@@ -114,11 +115,18 @@ in {
     };
   };
 
-  # Add important bin dirs to PATH
+  # ─── PATH Additions ─────────────────────────────────────────────────────
   home.sessionPath = [
     "$HOME/.emacs.d/bin"
     "$HOME/.nix-profile/bin"
   ];
 
+  # ─── Ensure .bashrc and .bash_profile exist for login/interactive shells ─
+  home.activation.createProfileLinks = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
+    ln -sf "$HOME/.config/bash/bashrc" "$HOME/.bashrc"
+    ln -sf "$HOME/.config/bash/profile" "$HOME/.bash_profile"
+  '';
+
+  # ─── Enable XDG Integration ─────────────────────────────────────────────
   xdg.enable = true;
 }
