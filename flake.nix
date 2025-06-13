@@ -11,7 +11,6 @@
     let
       system = "x86_64-linux";
 
-      # Import pkgs with allowUnfree = true for packages
       pkgs = import nixpkgs {
         inherit system;
         config = {
@@ -20,7 +19,6 @@
       };
     in
     {
-      # Use nixpkgs.lib.nixosSystem directly here, not pkgs.lib.nixosSystem
       nixosConfigurations.nixos = nixpkgs.lib.nixosSystem {
         inherit system;
 
@@ -30,7 +28,6 @@
           }
           ./configuration.nix
           ./hardware-configuration.nix
-          home-manager.nixosModules.home-manager
         ];
 
         specialArgs = {
@@ -38,8 +35,7 @@
         };
       };
 
-      # For home manager, use the pkgs you imported above
-      homeConfigurations.nixos = home-manager.lib.homeManagerConfiguration {
+      homeConfigurations.jacob = home-manager.lib.homeManagerConfiguration {
         pkgs = pkgs;
         modules = [
           ./home.nix

@@ -56,18 +56,8 @@
     '';
   };
 
-  # Disable screen blanking / DPMS via systemd user service
-  systemd.user.services.disable-screen-blanking = {
-    description = "Disable screen blanking and DPMS";
-    wantedBy = [ "graphical-session.target" ];
-    serviceConfig = {
-      Type = "oneshot";
-      ExecStart = "${pkgs.xorg.xset}/bin/xset s off -dpms s noblank";
-    };
-  };
-
   # User account
-  users.users.nixos = {
+  users.users.jacob = {
     isNormalUser = true;
     description = "Jacob";
     extraGroups = [ "wheel" "networkmanager" "video" "audio" ];
@@ -87,12 +77,6 @@
     xorg.xset
   ];
 
-  # Home Manager integration
-  home-manager = {
-    useUserPackages = true;
-    useGlobalPkgs = true;
-    users.nixos = import ./home.nix;
-  };
 
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;

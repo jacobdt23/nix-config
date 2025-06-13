@@ -19,8 +19,8 @@ let
   };
 in {
   home.stateVersion = "25.05";
-  home.username = "nixos";
-  home.homeDirectory = "/home/nixos";
+  home.username = "jacob";
+  home.homeDirectory = "/home/jacob";
 
   home.packages = with pkgs; [
     htop
@@ -38,6 +38,7 @@ in {
     vulkan-tools
     pciutils
     neofetch
+    ripgrep
   ];
 
   programs.vscode = {
@@ -47,19 +48,18 @@ in {
     ];
   };
 
-  # ─── Emacs ──────────────────────────────────────────────────────────────
-  programs.emacs = {
-    enable = true;
-    package = pkgs.emacs;
-  };
+  systemd.user.services.doom-emacs = {
+    Unit.Description = "Doom Emacs daemon";
+    Unit.WantedBy = [ "default.target" ];
 
-  systemd.user.services.emacs = {
-    Unit.Description = "Emacs Daemon";
-    Service.ExecStart = "${pkgs.emacs}/bin/emacs --fg-daemon";
+    Service.ExecStart = "${config.home.homeDirectory}/.emacs.d/bin/doom run --daemon";
+    Service.Restart = "on-failure";
+    Service.Type = "notify";
+    Service.NotifyAccess = "all";
+
     Install.WantedBy = [ "default.target" ];
   };
 
-  # ─── Davinci Resolve Script ─────────────────────────────────────────────
   home.file.".local/bin/resolve.sh" = {
     text = ''
       #!/usr/bin/env bash
@@ -69,14 +69,13 @@ in {
     executable = true;
   };
 
-  # ─── Bash Customizations ────────────────────────────────────────────────
+  # Bash config management
   programs.bash = {
     enable = true;
 
     shellAliases = {
-      # NixOS Shortcuts
       nrs = "sudo nixos-rebuild switch --flake ~/nix-config#$(hostname)";
-      hms = "nix run ~/nix-config#homeConfigurations.$(hostname).activationPackage";
+      hms = "nix run ~/nix-config#homeConfigurations.jacob.activationPackage";
       switchall = "nrs && hms";
       nclean = "sudo nix-collect-garbage -d";
       ngen = "sudo nix-env --list-generations --profile /nix/var/nix/profiles/system";
@@ -85,15 +84,12 @@ in {
       ncfg = "cd ~/nix-config";
       ncheck = "nix flake check ~/nix-config";
 
-      # Emacs
       ec = "GDK_BACKEND=wayland emacsclient -c -a \"\"";
 
-      # File Navigation
       ls = "ls --color=tty";
       l = "ls -alh";
       ll = "ls -l";
 
-      # Git Shortcuts
       gadd = "git add .";
       gcm = "git commit -m";
       gpull = "git pull --rebase";
@@ -102,31 +98,50 @@ in {
       glog = "git log --oneline --graph --all";
       gundo = "git reset --soft HEAD~1";
 
-      # Flatpak Cleanup
       flatclean = "flatpak uninstall --unused";
 
-      # Nix Helpers
       nsearch = "nix search nixpkgs";
       nshell = "nix shell nixpkgs#";
       nrun = "nix run nixpkgs#";
 
-      # System Info
       nf = "neofetch";
     };
   };
 
-  # ─── PATH Additions ─────────────────────────────────────────────────────
   home.sessionPath = [
     "$HOME/.emacs.d/bin"
     "$HOME/.nix-profile/bin"
   ];
 
-  # ─── Ensure .bashrc and .bash_profile exist for login/interactive shells ─
-  home.activation.createProfileLinks = lib.hm.dag.entryAfter [ "writeBoundary" ] ''
-    ln -sf "$HOME/.config/bash/bashrc" "$HOME/.bashrc"
-    ln -sf "$HOME/.config/bash/profile" "$HOME/.bash_profile"
-  '';
+  # Manage bashrc and bash_profile directly
+  home.file.".bashrc" = {
+    text = ''
+      # Source Home Manager bash aliases and settings
+      if [ -f "${config.home.homeDirectory}/.bash_aliases" ]; then
+        . "${config.home.homeDirectory}/.bash_aliases"
+      fi
 
-  # ─── Enable XDG Integration ─────────────────────────────────────────────
+      # Custom bashrc commands
+      shopt -s histappend
+      shopt -s checkwinsize
+      shopt -s extglob
+      shopt -s globstar
+      shopt -s checkjobs
+      HISTFILESIZE=100000
+      HISTSIZE=10000
+    '';
+  };
+
+  home.file.".bash_profile" = {
+    text = ''
+      # ~/.bash_profile: executed by bash login shells.
+
+      # Source .bashrc if it exists
+      if [ -f "${config.home.homeDirectory}/.bashrc" ]; then
+        . "${config.home.homeDirectory}/.bashrc"
+      fi
+    '';
+  };
+
   xdg.enable = true;
 }
