@@ -27,7 +27,6 @@ in {
     tree
     gh
     vscode
-    resolve-fhs
     flatpak
     gimp
     krita
@@ -39,7 +38,9 @@ in {
     pciutils
     neofetch
     ripgrep
+    davinci-resolve
   ];
+
 
   programs.vscode = {
     enable = true;

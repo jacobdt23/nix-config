@@ -1,3 +1,4 @@
+# /home/jacob/nix-config/configuration.nix
 { config, pkgs, ... }:
 
 {
@@ -9,16 +10,25 @@
   nix.settings.experimental-features = [ "nix-command" "flakes" ];
   nix.gc.automatic = true;
   nix.gc.dates = "weekly";
-  nix.gc.options = "--delete-older-than 7d";
+  nix.gc.options = "--delete-older-than 7d"; # Keep generations for 7 days
+
+# Bootloader configuration (GRUB)
+  boot.loader.grub = {
+    enable = true;
+    # device = "/dev/sda"; # This line is for BIOS installs and must be removed for UEFI
+    configurationLimit = 10; # Keep up to 10 entries in the GRUB menu
+    # The 'efi = { ... };' block should NO LONGER BE HERE (it's handled by efiSupport)
+
+    # --- ADD THESE TWO LINES ---
+    efiSupport = true; # Enable UEFI support for GRUB
+    devices = [ "/dev/sda" ]; # Specify the boot disk where GRUB will be installed for UEFI
+    # ---------------------------
+  };
 
   # System settings
   networking.hostName = "nixos";
   time.timeZone = "America/New_York";
   i18n.defaultLocale = "en_US.UTF-8";
-
-  # Bootloader
-  boot.loader.systemd-boot.enable = true;
-  boot.loader.efi.canTouchEfiVariables = true;
 
   # NVIDIA drivers
   services.xserver.videoDrivers = [ "nvidia" ];
@@ -77,9 +87,9 @@
     xorg.xset
   ];
 
-
   # Allow unfree packages
   nixpkgs.config.allowUnfree = true;
 
+  # Set your state version for NixOS upgrades
   system.stateVersion = "25.05";
 }
