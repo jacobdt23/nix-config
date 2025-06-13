@@ -83,8 +83,8 @@ in {
       nupdate = "cd ~/nix-config && nix flake update && git add flake.lock && git commit -m 'flake update' && git push && nrs && hms";
       ncfg = "cd ~/nix-config";
       ncheck = "nix flake check ~/nix-config";
-
-      ec = "GDK_BACKEND=wayland emacsclient -c -a \"\"";
+      
+      ec = "GDK_BACKEND=wayland emacsclient -c -a \"emacs\"";
 
       ls = "ls --color=tty";
       l = "ls -alh";
