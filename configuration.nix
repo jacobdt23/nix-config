@@ -12,18 +12,20 @@
   nix.gc.dates = "weekly";
   nix.gc.options = "--delete-older-than 7d"; # Keep generations for 7 days
 
-# Bootloader configuration (GRUB)
-  boot.loader.grub = {
-    enable = true;
-    # device = "/dev/sda"; # This line is for BIOS installs and must be removed for UEFI
-    configurationLimit = 10; # Keep up to 10 entries in the GRUB menu
-    # The 'efi = { ... };' block should NO LONGER BE HERE (it's handled by efiSupport)
+ # --- REMOVE ENTIRE BOOT.LOADER.GRUB BLOCK IF IT'S STILL THERE ---
+  # boot.loader.grub = {
+  #   enable = true;
+  #   ...
+  # };
+  # -----------------------------------------------------------------
 
-    # --- ADD THESE TWO LINES ---
-    efiSupport = true; # Enable UEFI support for GRUB
-    devices = [ "/dev/sda" ]; # Specify the boot disk where GRUB will be installed for UEFI
-    # ---------------------------
+  # Bootloader configuration (systemd-boot for UEFI)
+  boot.loader.systemd-boot = {
+    enable = true;
+    configurationLimit = 10; # Keep 10 NixOS entries in the boot menu
   };
+  # Allow NixOS to register itself in your motherboard's UEFI boot entries
+  boot.loader.efi.canTouchEfiVariables = true;
 
   # System settings
   networking.hostName = "nixos";
