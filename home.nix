@@ -39,6 +39,7 @@ in {
     neofetch
     ripgrep
     davinci-resolve
+    wofi
   ];
 
 

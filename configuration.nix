@@ -85,6 +85,7 @@
     emacs
     brave
     kitty
+    pavucontrol
     waybar
     xorg.xset
   ];
